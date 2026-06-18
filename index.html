@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML to EXE Packager</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JSZip for creating the package -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .drag-active { border-color: #3b82f6; background-color: rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+    <div class="max-w-4xl w-full bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-10 border border-gray-700">
+        
+        <div class="text-center mb-8">
+            <i data-lucide="box" class="w-12 h-12 mx-auto text-blue-500 mb-4 animate-pulse"></i>
+            <h1 class="text-3xl font-bold text-white mb-2">HTML to EXE Packager</h1>
+            <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto">
+                Package your HTML5 game or web application into a professional Electron builder setup. 
+                Configure your window settings, upload an icon, and get a ready-to-run package!
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Left Column: Settings -->
+            <div class="space-y-6">
+                <!-- Card 1: App Config -->
+                <div class="bg-gray-850 p-5 rounded-xl border border-gray-700 space-y-4">
+                    <h2 class="text-lg font-semibold text-blue-400 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5"></i> Basic Configuration
+                    </h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Game/App Name</label>
+                            <input type="text" id="appName" value="MyAwesomeGame" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Version</label>
+                            <input type="text" id="appVersion" value="1.0.0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Window Config -->
+                <div class="bg-gray-850 p-5 rounded-xl border border-gray-700 space-y-4">
+                    <h2 class="text-lg font-semibold text-blue-400 flex items-center gap-2">
+                        <i data-lucide="monitor" class="w-5 h-5"></i> Window & Display
+                    </h2>
+                    
+                    <!-- Startup & Dynamic behavior -->
+                    <div class="flex items-center justify-between bg-gray-900/50 p-3 rounded-lg border border-gray-750">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="resizable" checked class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-offset-gray-800">
+                            <span class="text-sm font-medium text-gray-300">Resizable Window</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="fullscreen" class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-offset-gray-800">
+                            <span class="text-sm font-medium text-gray-300">Start Fullscreen</span>
+                        </label>
+                    </div>
+
+                    <!-- Size Settings -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Default Width (px)</label>
+                                <input type="number" id="appWidth" value="1280" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Default Height (px)</label>
+                                <input type="number" id="appHeight" value="720" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-750">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Min Width (px)</label>
+                                <input type="number" id="minWidth" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Min Height (px)</label>
+                                <input type="number" id="minHeight" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Max Width (px)</label>
+                                <input type="number" id="maxWidth" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Max Height (px)</label>
+                                <input type="number" id="maxHeight" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Files & Customization -->
+            <div class="space-y-6">
+                <!-- Card 3: Icon Upload -->
+                <div class="bg-gray-850 p-5 rounded-xl border border-gray-700 space-y-4">
+                    <h2 class="text-lg font-semibold text-blue-400 flex items-center gap-2">
+                        <i data-lucide="image" class="w-5 h-5"></i> Desktop App Icon
+                    </h2>
+                    <div class="flex items-center space-x-4">
+                        <div id="iconPreviewContainer" class="w-16 h-16 bg-gray-900 rounded-xl border border-gray-600 flex items-center justify-center relative overflow-hidden group">
+                            <i id="iconPlaceholder" data-lucide="image" class="w-8 h-8 text-gray-500"></i>
+                            <img id="iconPreview" class="hidden w-full h-full object-cover" />
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-400 mb-2">Upload a square image (.png or .ico preferred, e.g. 256x256 or 512x512) to serve as your .exe program icon.</p>
+                            <label class="inline-flex items-center px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                                <i data-lucide="file-image" class="w-4 h-4 mr-1.5"></i> Select Icon
+                                <input type="file" id="iconInput" accept=".png,.ico" class="hidden">
+                            </label>
+                            <button id="clearIconBtn" class="hidden text-xs text-red-400 hover:text-red-300 ml-3">Remove</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Web Assets Dropzone -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-400">Application Source File(s)</label>
+                    <div id="dropzone" class="border-2 border-dashed border-gray-600 rounded-xl p-6 text-center transition-all duration-200 ease-in-out cursor-pointer hover:border-blue-400 hover:bg-gray-750 group">
+                        <input type="file" id="fileInput" class="hidden" multiple>
+                        
+                        <div class="flex flex-col items-center pointer-events-none">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-400 group-hover:text-blue-400 mb-2 transition-colors"></i>
+                            <h3 class="text-sm font-medium text-white mb-0.5">Drag & Drop Game File(s)</h3>
+                            <p class="text-xs text-gray-400">Must include an <code class="bg-gray-900 px-1 py-0.5 rounded text-blue-300 font-mono">index.html</code></p>
+                        </div>
+                        
+                        <div id="fileList" class="mt-3 text-xs text-blue-400 font-medium hidden">
+                            <!-- File load status -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="generateBtn" disabled class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-blue-500/25">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+            <span>Generate EXE Builder Package</span>
+        </button>
+
+        <!-- Status / Logs -->
+        <div id="statusBox" class="mt-6 bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono text-sm text-green-400 hidden h-32 overflow-y-auto">
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const generateBtn = document.getElementById('generateBtn');
+        const statusBox = document.getElementById('statusBox');
+
+        // Icon Elements
+        const iconInput = document.getElementById('iconInput');
+        const iconPreview = document.getElementById('iconPreview');
+        const iconPlaceholder = document.getElementById('iconPlaceholder');
+        const clearIconBtn = document.getElementById('clearIconBtn');
+        
+        // State
+        let uploadedFiles = [];
+        let uploadedIconFile = null;
+
+        // --- Icon Upload Preview ---
+        iconInput.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                uploadedIconFile = file;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    iconPreview.src = e.target.result;
+                    iconPreview.classList.remove('hidden');
+                    iconPlaceholder.classList.add('hidden');
+                    clearIconBtn.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        clearIconBtn.addEventListener('click', () => {
+            uploadedIconFile = null;
+            iconInput.value = '';
+            iconPreview.src = '';
+            iconPreview.classList.add('hidden');
+            iconPlaceholder.classList.remove('hidden');
+            clearIconBtn.classList.add('hidden');
+        });
+
+        // --- Drag and Drop Logic ---
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.add('drag-active');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.remove('drag-active');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            uploadedFiles = Array.from(files);
+            
+            // Check if index.html exists in selected assets
+            const hasIndex = uploadedFiles.some(f => f.name.toLowerCase() === 'index.html' || f.webkitRelativePath.toLowerCase().endsWith('index.html'));
+            
+            if (uploadedFiles.length > 0) {
+                fileList.classList.remove('hidden');
+                
+                if (hasIndex) {
+                    fileList.innerHTML = `<span class="text-green-400">✓ Loaded ${uploadedFiles.length} file(s) including index.html</span>`;
+                    generateBtn.disabled = false;
+                } else {
+                    fileList.innerHTML = `<span class="text-red-400">⚠ Error: Could not find an 'index.html' file!</span>`;
+                    generateBtn.disabled = true;
+                }
+            }
+        }
+
+        function log(msg) {
+            statusBox.classList.remove('hidden');
+            const div = document.createElement('div');
+            div.textContent = `> ${msg}`;
+            statusBox.appendChild(div);
+            statusBox.scrollTop = statusBox.scrollHeight;
+        }
+
+        // --- Packaging Logic (Electron Generator) ---
+        generateBtn.addEventListener('click', async () => {
+            if (uploadedFiles.length === 0) return;
+            
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span> Packaging App...</span>';
+            lucide.createIcons();
+            
+            statusBox.innerHTML = ''; // Clear logs
+            log("Initializing JSZip...");
+            
+            try {
+                const zip = new JSZip();
+                
+                const appName = document.getElementById('appName').value.replace(/[^a-zA-Z0-9-]/g, '') || "MyGame";
+                const appVersion = document.getElementById('appVersion').value || "1.0.0";
+                
+                const appWidth = document.getElementById('appWidth').value || 1280;
+                const appHeight = document.getElementById('appHeight').value || 720;
+                
+                const minWidth = document.getElementById('minWidth').value;
+                const minHeight = document.getElementById('minHeight').value;
+                const maxWidth = document.getElementById('maxWidth').value;
+                const maxHeight = document.getElementById('maxHeight').value;
+                
+                const resizable = document.getElementById('resizable').checked;
+                const fullscreen = document.getElementById('fullscreen').checked;
+                
+                // 1. Add user files to the 'src' folder
+                log(`Adding ${uploadedFiles.length} source files to /src directory...`);
+                const srcFolder = zip.folder("src");
+                
+                for (let i = 0; i < uploadedFiles.length; i++) {
+                    const file = uploadedFiles[i];
+                    // Handle directory structure preserving pathing
+                    const path = file.webkitRelativePath ? file.webkitRelativePath.substring(file.webkitRelativePath.indexOf('/') + 1) : file.name;
+                    srcFolder.file(path, file);
+                }
+
+                // 2. Handle Custom Icon
+                let iconFilename = "icon.png";
+                if (uploadedIconFile) {
+                    log("Integrating custom application icon...");
+                    const buildFolder = zip.folder("build");
+                    iconFilename = uploadedIconFile.name;
+                    buildFolder.file(iconFilename, uploadedIconFile);
+                }
+
+                // 3. Generate package.json
+                log("Generating package.json...");
+                const packageJson = {
+                    "name": appName.toLowerCase(),
+                    "productName": appName,
+                    "version": appVersion,
+                    "description": "Custom Compiled Web Game",
+                    "author": "Web-to-EXE Packager User",
+                    "main": "main.js",
+                    "scripts": {
+                        "start": "electron .",
+                        "build": "electron-builder --win --x64"
+                    },
+                    "build": {
+                        "appId": `com.yourcompany.${appName.toLowerCase()}`,
+                        "directories": { "output": "dist" },
+                        "win": {
+                            "target": "portable",
+                            "icon": uploadedIconFile ? `build/${iconFilename}` : undefined
+                        }
+                    },
+                    "devDependencies": {
+                        "electron": "^29.0.0",
+                        "electron-builder": "^24.9.1"
+                    }
+                };
+                zip.file("package.json", JSON.stringify(packageJson, null, 2));
+
+                // 4. Generate main.js (Electron entry point)
+                log("Generating main.js (Electron Window Manager)...");
+                
+                // Build dynamic properties
+                const minWidthProp = minWidth ? `minWidth: ${minWidth},` : '';
+                const minHeightProp = minHeight ? `minHeight: ${minHeight},` : '';
+                const maxWidthProp = maxWidth ? `maxWidth: ${maxWidth},` : '';
+                const maxHeightProp = maxHeight ? `maxHeight: ${maxHeight},` : '';
+                const iconProp = uploadedIconFile ? `icon: path.join(__dirname, 'build', '${iconFilename}'),` : '';
+
+                const mainJsContent = `
+const { app, BrowserWindow } = require('electron');
+const path = require('node:path');
+
+function createWindow () {
+  const mainWindow = new BrowserWindow({
+    width: ${appWidth},
+    height: ${appHeight},
+    ${minWidthProp}
+    ${minHeightProp}
+    ${maxWidthProp}
+    ${maxHeightProp}
+    resizable: ${resizable},
+    fullscreen: ${fullscreen},
+    autoHideMenuBar: true,
+    ${iconProp}
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  // Load the main HTML asset file
+  mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+                app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+`;
+                zip.file("main.js", mainJsContent.trim());
+
+                // 5. Generate Windows Batch Script (build.bat)
+                log("Generating build.bat builder script...");
+                const batContent = `
+@echo off
+color 0B
+echo ===================================================
+echo   HTML to EXE Compiler: ${appName}
+echo ===================================================
+echo.
+echo Checking for existing dependencies...
+IF NOT EXIST "node_modules\\" (
+    echo Step 1: Downloading and installing local build dependencies...
+    echo (This may take a minute or two on the first run)
+    call npm install
+) ELSE (
+    echo Step 1: Dependencies found! Skipping npm install.
+)
+
+echo.
+echo Step 2: Compiling assets into stand-alone executable...
+echo (If this is your first time, it will download Electron binaries and cache them for future use.)
+call npm run build
+
+echo.
+echo ===================================================
+echo SUCCESS! Look inside the "dist" directory for your .exe!
+echo ===================================================
+pause
+`;
+                zip.file("build.bat", batContent.trim());
+
+                // 6. Generate README
+                log("Generating instructional README.txt...");
+                const readmeContent = `
+=========================================================
+      HOW TO BUILD YOUR EXE FILE - COMPLETE GUIDE
+=========================================================
+
+This package converts your web files into a standalone Windows .exe using Electron.
+
+--- PREREQUISITES ---
+Ensure you have Node.js installed on your computer.
+Download it from: https://nodejs.org (The LTS version is recommended).
+
+--- QUICKSTART ---
+1. Extract this ENTIRE zip file into its own folder. Do not run it from inside the ZIP.
+2. Double-click the \`build.bat\` file.
+3. Wait for the terminal to finish. 
+4. Once completed, open the new \`dist\` folder. Your portable .exe will be inside!
+
+--- FAQ & TROUBLESHOOTING ---
+
+Q: The terminal shows warnings, "deprecated", or "vulnerabilities" during Step 1. Is it broken?
+A: NO! When running 'npm install', Node.js often displays warnings about deprecated packages or funding in the dependency tree. This is completely normal for Electron projects and safely ignored. Your app will still build perfectly.
+
+Q: The build seems to pause or stop at "building target=portable".
+A: Electron-builder has to compress all the Chromium engine binaries into a single portable .exe file. This process is CPU intensive and can take 30-60 seconds where the console appears to do nothing. Just wait for the "SUCCESS!" message.
+
+Q: It's downloading a lot of stuff (Electron, winCodeSign, nsis). Can I avoid this?
+A: The script downloads the Electron engine (~100MB) the very first time you build a project. However, these files are saved to a global cache on your PC. Future builds (even for different games) will skip the download and finish much faster. The build.bat also checks for existing 'node_modules' to skip redundant installs.
+
+Q: What is a "Portable" .exe?
+A: It means your game is packed into a single executable file. Players don't need an installer; they just double-click the .exe and it runs immediately. You can upload this .exe directly to Steam, Itch.io, or Google Drive.
+`;
+                zip.file("README.txt", readmeContent.trim());
+
+                // 7. Finalize and Download
+                log("Compressing complete package... (this may take a few moments)");
+                const content = await zip.generateAsync({ type: "blob" });
+                
+                log("Initiating file download...");
+                const url = window.URL.createObjectURL(content);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = `${appName}_Builder.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                log("Download ready! Unzip, configure Node.js, and execute build.bat.");
+
+                generateBtn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i><span> Download Ready</span>';
+                generateBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                generateBtn.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    generateBtn.innerHTML = '<i data-lucide="zap" class="w-5 h-5"></i><span> Generate EXE Builder Package</span>';
+                    generateBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                    generateBtn.classList.replace('hover:bg-green-500', 'hover:bg-blue-500');
+                    generateBtn.disabled = false;
+                    lucide.createIcons();
+                }, 3000);
+
+            } catch (err) {
+                console.error(err);
+                log(`Error: ${err.message}`);
+                generateBtn.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5"></i><span> Compiling Failed</span>';
+            }
+        });
+
+    </script>
+</body>
+</html>
