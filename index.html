@@ -464,6 +464,18 @@ A: The script downloads the Electron engine (~100MB) the very first time you bui
 
 Q: What is a "Portable" .exe?
 A: It means your game is packed into a single executable file. Players don't need an installer; they just double-click the .exe and it runs immediately. You can upload this .exe directly to Steam, Itch.io, or Google Drive.
+
+Q: Can I pull the generated .exe app out of the folder? Will it still work?
+A: Yes! Because this is a "portable" executable, all the necessary game files and the engine are packed inside that single .exe file. You can move it to your desktop, put it on a USB drive, or upload it directly to a storefront like Steam or Itch.io, and it will work perfectly on its own without needing any of the other build folders.
+
+Q: Can I share this .exe with my friends who use Mac or Linux?
+A: No, this specific .exe file is built for Windows (64-bit). To create versions for Mac or Linux, you would need to run this build process on a Mac or Linux machine, or modify the package.json to include cross-compilation targets (which is advanced and not supported by this basic script).
+
+Q: Why does my game show a blank white screen when I open it?
+A: This usually happens if your HTML file has broken paths. Make sure your index.html references your images, scripts, and CSS files using relative paths (e.g., ./images/hero.png instead of C:/Users/.../hero.png). The game needs to be able to find its files inside the packaged .exe environment.
+
+Q: I updated my game. Do I have to re-download the builder zip from the website?
+A: No! If you just made a few changes to your index.html or game code, you can simply replace the old files inside the src folder of this builder package with your new ones. Then, double-click build.bat again to instantly generate an updated .exe.
 `;
                 zip.file("README.txt", readmeContent.trim());
 
