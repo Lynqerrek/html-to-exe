@@ -43,7 +43,7 @@
                             <input type="text" id="appName" value="MyAwesomeGame" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-400 mb-1">Version</label>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Version (e.g., 1.0.0)</label>
                             <input type="text" id="appVersion" value="1.0.0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
                         </div>
                     </div>
@@ -83,22 +83,22 @@
                         <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-750">
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Min Width (px)</label>
-                                <input type="number" id="minWidth" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                                <input type="number" id="minWidth" value="1280" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Min Height (px)</label>
-                                <input type="number" id="minHeight" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                                <input type="number" id="minHeight" value="720" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Max Width (px)</label>
-                                <input type="number" id="maxWidth" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                                <input type="number" id="maxWidth" value="3840" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Max Height (px)</label>
-                                <input type="number" id="maxHeight" placeholder="None" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
+                                <input type="number" id="maxHeight" value="2160" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-blue-500 text-sm">
                             </div>
                         </div>
                     </div>
@@ -283,15 +283,23 @@
                 const zip = new JSZip();
                 
                 const appName = document.getElementById('appName').value.replace(/[^a-zA-Z0-9-]/g, '') || "MyGame";
-                const appVersion = document.getElementById('appVersion').value || "1.0.0";
+                
+                // Enforce proper 3-part Semantic Versioning (e.g., convert "2.0" -> "2.0.0")
+                let rawVersion = document.getElementById('appVersion').value.trim() || "1.0.0";
+                let versionParts = rawVersion.split('.');
+                while (versionParts.length < 3) {
+                    versionParts.push('0');
+                }
+                const appVersion = versionParts.slice(0, 3).join('.');
+                log(`Validated Semantic Version format to: ${appVersion}`);
                 
                 const appWidth = document.getElementById('appWidth').value || 1280;
                 const appHeight = document.getElementById('appHeight').value || 720;
                 
-                const minWidth = document.getElementById('minWidth').value;
-                const minHeight = document.getElementById('minHeight').value;
-                const maxWidth = document.getElementById('maxWidth').value;
-                const maxHeight = document.getElementById('maxHeight').value;
+                const minWidth = document.getElementById('minWidth').value || 1280;
+                const minHeight = document.getElementById('minHeight').value || 720;
+                const maxWidth = document.getElementById('maxWidth').value || 3840;
+                const maxHeight = document.getElementById('maxHeight').value || 2160;
                 
                 const resizable = document.getElementById('resizable').checked;
                 const fullscreen = document.getElementById('fullscreen').checked;
@@ -323,6 +331,7 @@
                     "productName": appName,
                     "version": appVersion,
                     "description": "Custom Compiled Web Game",
+                    "author": "Web-to-EXE Packager User",
                     "main": "main.js",
                     "scripts": {
                         "start": "electron .",
@@ -386,10 +395,10 @@ app.whenReady().then(() => {
   });
 });
 
-                app.on('window-all-closed', () => {
-                  if (process.platform !== 'darwin') app.quit();
-                });
-                `;
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+`;
                 zip.file("main.js", mainJsContent.trim());
 
                 // 5. Generate Windows Batch Script (build.bat)
@@ -401,7 +410,14 @@ echo ===================================================
 echo   HTML to EXE Compiler: ${appName}
 echo ===================================================
 echo.
-echo Step 1: Downloading and installing local build dependencies...
+echo Step 0: Closing any existing game instances to release file locks...
+taskkill /f /im "${appName}*.exe" 2>nul
+taskkill /f /im "${appName.toLowerCase()}*.exe" 2>nul
+timeout /t 1 /nobreak >nul
+
+echo.
+echo Step 1: Downloading and verifying local build dependencies...
+echo (Note: Large files like the Electron engine are cached automatically!)
 call npm install
 
 echo.
