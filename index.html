@@ -323,7 +323,6 @@
                     "productName": appName,
                     "version": appVersion,
                     "description": "Custom Compiled Web Game",
-                    "author": "Web-to-EXE Packager User",
                     "main": "main.js",
                     "scripts": {
                         "start": "electron .",
@@ -388,9 +387,9 @@ app.whenReady().then(() => {
 });
 
                 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
-`;
+                  if (process.platform !== 'darwin') app.quit();
+                });
+                `;
                 zip.file("main.js", mainJsContent.trim());
 
                 // 5. Generate Windows Batch Script (build.bat)
@@ -402,18 +401,11 @@ echo ===================================================
 echo   HTML to EXE Compiler: ${appName}
 echo ===================================================
 echo.
-echo Checking for existing dependencies...
-IF NOT EXIST "node_modules\\" (
-    echo Step 1: Downloading and installing local build dependencies...
-    echo (This may take a minute or two on the first run)
-    call npm install
-) ELSE (
-    echo Step 1: Dependencies found! Skipping npm install.
-)
+echo Step 1: Downloading and installing local build dependencies...
+call npm install
 
 echo.
 echo Step 2: Compiling assets into stand-alone executable...
-echo (If this is your first time, it will download Electron binaries and cache them for future use.)
 call npm run build
 
 echo.
