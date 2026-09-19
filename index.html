@@ -141,7 +141,7 @@
                         <div class="flex flex-col items-center pointer-events-none">
                             <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-400 group-hover:text-blue-400 mb-2 transition-colors"></i>
                             <h3 class="text-sm font-medium text-white mb-0.5">Drag & Drop Game File(s)</h3>
-                            <p class="text-xs text-gray-400">Must include an <code class="bg-gray-900 px-1 py-0.5 rounded text-blue-300 font-mono">index.html</code></p>
+                            <p class="text-xs text-gray-400">Must include an <code class="bg-gray-900 px-1 py-0.5 rounded text-blue-300 font-mono">.html</code> file</p>
                         </div>
                         
                         <div id="fileList" class="mt-3 text-xs text-blue-400 font-medium hidden">
@@ -184,6 +184,7 @@
         // State
         let uploadedFiles = [];
         let uploadedIconFile = null;
+        let entryHtmlPath = 'index.html'; // Default, will be dynamically updated
 
         // --- Icon Upload Preview ---
         iconInput.addEventListener('change', function(e) {
@@ -248,17 +249,29 @@
         function handleFiles(files) {
             uploadedFiles = Array.from(files);
             
-            // Check if index.html exists in selected assets
-            const hasIndex = uploadedFiles.some(f => f.name.toLowerCase() === 'index.html' || f.webkitRelativePath.toLowerCase().endsWith('index.html'));
+            // Find all HTML files in the uploaded assets
+            let htmlFilesMap = [];
+            for (let f of uploadedFiles) {
+                if (f.name.toLowerCase().endsWith('.html')) {
+                    // Get the relative path as it will appear inside the ZIP / src folder
+                    const relativePath = f.webkitRelativePath ? f.webkitRelativePath.substring(f.webkitRelativePath.indexOf('/') + 1) : f.name;
+                    htmlFilesMap.push(relativePath);
+                }
+            }
             
             if (uploadedFiles.length > 0) {
                 fileList.classList.remove('hidden');
                 
-                if (hasIndex) {
-                    fileList.innerHTML = `<span class="text-green-400">✓ Loaded ${uploadedFiles.length} file(s) including index.html</span>`;
+                if (htmlFilesMap.length > 0) {
+                    // Prefer index.html if it exists, otherwise take the first HTML file found
+                    const indexFile = htmlFilesMap.find(p => p.toLowerCase().endsWith('index.html') || p.toLowerCase() === 'index.html');
+                    entryHtmlPath = indexFile || htmlFilesMap[0];
+                    
+                    const displayFileName = entryHtmlPath.split('/').pop();
+                    fileList.innerHTML = `<span class="text-green-400">✓ Loaded ${uploadedFiles.length} file(s) (Entry: ${displayFileName})</span>`;
                     generateBtn.disabled = false;
                 } else {
-                    fileList.innerHTML = `<span class="text-red-400">⚠ Error: Could not find an 'index.html' file!</span>`;
+                    fileList.innerHTML = `<span class="text-red-400">⚠ Error: Could not find any HTML file to use as an entry point!</span>`;
                     generateBtn.disabled = true;
                 }
             }
@@ -395,8 +408,8 @@ function createWindow () {
     }
   });
 
-  // Load the main HTML asset file
-  mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+  // Load the main HTML asset file dynamically
+  mainWindow.loadFile(path.join(__dirname, 'src', '${entryHtmlPath}'));
 }
 
 app.whenReady().then(() => {
@@ -484,10 +497,10 @@ Q: Can I share this .exe with my friends who use Mac or Linux?
 A: No, this specific .exe file is built for Windows (64-bit). To create versions for Mac or Linux, you would need to run this build process on a Mac or Linux machine, or modify the package.json to include cross-compilation targets (which is advanced and not supported by this basic script).
 
 Q: Why does my game show a blank white screen when I open it?
-A: This usually happens if your HTML file has broken paths. Make sure your index.html references your images, scripts, and CSS files using relative paths (e.g., ./images/hero.png instead of C:/Users/.../hero.png). The game needs to be able to find its files inside the packaged .exe environment.
+A: This usually happens if your HTML file has broken paths. Make sure your main HTML file references your images, scripts, and CSS files using relative paths (e.g., ./images/hero.png instead of C:/Users/.../hero.png). The game needs to be able to find its files inside the packaged .exe environment.
 
 Q: I updated my game. Do I have to re-download the builder zip from the website?
-A: No! If you just made a few changes to your index.html or game code, you can simply replace the old files inside the src folder of this builder package with your new ones. Then, double-click build.bat again to instantly generate an updated .exe.
+A: No! If you just made a few changes to your HTML or game code, you can simply replace the old files inside the src folder of this builder package with your new ones. Then, double-click build.bat again to instantly generate an updated .exe.
 `;
                 zip.file("README.txt", readmeContent.trim());
 
