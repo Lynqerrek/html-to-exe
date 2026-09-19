@@ -46,6 +46,10 @@
                             <label class="block text-xs font-medium text-gray-400 mb-1">Version (e.g., 1.0.0)</label>
                             <input type="text" id="appVersion" value="1.0.0" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
                         </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Publisher / Producent Name</label>
+                            <input type="text" id="appPublisher" value="My Studio Name" placeholder="e.g. EA, Ubisoft, John Doe" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 text-sm">
+                        </div>
                     </div>
                 </div>
 
@@ -284,6 +288,11 @@
                 
                 const appName = document.getElementById('appName').value.replace(/[^a-zA-Z0-9-]/g, '') || "MyGame";
                 
+                // Get Publisher Information
+                const rawPublisher = document.getElementById('appPublisher').value.trim() || "Unknown Publisher";
+                // Create a web-safe ID string for the publisher (e.g. "My Studio" -> "mystudio")
+                const safePublisherId = rawPublisher.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || "unknown";
+                
                 // Enforce proper 3-part Semantic Versioning (e.g., convert "2.0" -> "2.0.0")
                 let rawVersion = document.getElementById('appVersion').value.trim() || "1.0.0";
                 let versionParts = rawVersion.split('.');
@@ -326,19 +335,21 @@
 
                 // 3. Generate package.json
                 log("Generating package.json...");
+                const currentYear = new Date().getFullYear();
                 const packageJson = {
                     "name": appName.toLowerCase(),
                     "productName": appName,
                     "version": appVersion,
                     "description": "Custom Compiled Web Game",
-                    "author": "Web-to-EXE Packager User",
+                    "author": rawPublisher, // This sets the author/publisher
                     "main": "main.js",
                     "scripts": {
                         "start": "electron .",
                         "build": "electron-builder --win --x64"
                     },
                     "build": {
-                        "appId": `com.yourcompany.${appName.toLowerCase()}`,
+                        "appId": `com.${safePublisherId}.${appName.toLowerCase()}`, // Standard bundle identifier
+                        "copyright": `Copyright © ${currentYear} ${rawPublisher}`, // This embeds into the Windows Details metadata
                         "directories": { "output": "dist" },
                         "win": {
                             "target": "portable",
@@ -408,6 +419,7 @@ app.on('window-all-closed', () => {
 color 0B
 echo ===================================================
 echo   HTML to EXE Compiler: ${appName}
+echo   Publisher: ${rawPublisher}
 echo ===================================================
 echo.
 echo Step 0: Closing any existing game instances to release file locks...
